@@ -35,7 +35,7 @@ $operations['strtotime'] = 'Convert human readable date/time string to a unix ti
 $operations['timestamp_to_date'] = "Convert a unix timestamp to a formatted date";
 $operations['datestamp'] = "Generate a Date/Time Stamp";
 
-if ($_POST['operation']){
+if (array_key_exists('operation', $_POST)){
 
 	switch($_POST['operation']){
 		case 'urlencode':
@@ -151,30 +151,29 @@ if ($_POST['operation']){
 	<label for="operation">Operation</label>
 	<select name="operation" class="input-xxlarge">
 		<?php foreach ($operations as $k=>$v):?>
-			<option value="<?php echo $k;?>" <?php echo $_POST['operation'] == $k ? 'selected="selected"' : ''?>><?php echo $v;?></option>
+			<option value="<?php echo $k;?>" <?php echo array_key_exists('operation', $_POST) && $_POST['operation'] == $k ? 'selected="selected"' : ''?>><?php echo $v;?></option>
 		<?php endforeach; ?>
 	</select>
 	
 	<div class="row-fluid">
 			<div class="span6">
 				<label for="string">Original String</label>
-				<textarea rows="10" cols="80" name="string"><?php echo $_POST['string'];?></textarea>
+				<textarea rows="10" cols="80" name="string"><?php echo array_key_exists('string', $_POST) ? $_POST['string'] : '';?></textarea>
 			</div>
 			
 			<div class="span6">
 				<label for="string">Result</label>
-				<textarea rows="10" cols="80" name="result"><?php echo $result;?></textarea>
+				<textarea rows="10" cols="80" name="result"><?php echo isset($result) ? $result : '';?></textarea>
 			</div>
 	
 			<input type="submit">
 	</div>
 	</form>
 	
-	<?php if ($result):?>
+	<?php if (isset($result)):?>
 		<p>Result Length: <?php echo strlen($result);?></p>
 	<?php endif;?>
 	
-
 </div>
 </body>
 </html>
