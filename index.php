@@ -34,6 +34,7 @@ $operations['preg_quote'] = 'Prepare string to be used in regular expression';
 $operations['strtotime'] = 'Convert human readable date/time string to a unix time stamp';
 $operations['timestamp_to_date'] = "Convert a unix timestamp to a formatted date";
 $operations['datestamp'] = "Generate a Date/Time Stamp";
+$operations['unserialize'] = "unserialize()";
 
 if (array_key_exists('operation', $_POST)){
 
@@ -92,6 +93,9 @@ if (array_key_exists('operation', $_POST)){
 			break;
 		case 'datestamp':
 			$result = date('YmdHis') . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT);
+			break;
+		case 'unserialize':
+			$result = print_r(unserialize($_POST['string']), TRUE);
 			break;
 	}	
 }
