@@ -1,4 +1,5 @@
 <?php
+ini_set('display_errors', false);
 function generate_guid()
 {
 	
@@ -14,6 +15,28 @@ function generate_guid()
 			// 8 bits for "clk_seq_low"
 		mt_rand(0, 65535), mt_rand(0, 65535), mt_rand(0, 65535) // 48 bits for "node"
 	);
+}
+
+if (!function_exists('mysql_escape_string'))
+{
+	function mysql_escape_string($unescaped_string = null)
+	{
+		/**
+		 * https://www.php.net/manual/en/function.mysql-real-escape-string.php
+		 * mysql_real_escape_string() calls MySQL's library function
+		 * mysql_real_escape_string, which prepends backslashes to the following characters:
+		 * \x00, \n, \r, \, ', " and \x1a.
+		 */
+		$search = [
+			'\x00', '\n', '\r', '\\', "'", '"', '\xla'
+		];
+		$replacements = [];
+		foreach($search as $s){
+			$replacements[] = '\\' . $s;
+		}
+
+		return str_replace($search, $replacements, $unescaped_string);
+	}
 }
 
 $operations['urlencode'] = 'urlencode()';
@@ -38,66 +61,70 @@ $operations['unserialize'] = "unserialize()";
 
 if (array_key_exists('operation', $_POST)){
 
-	switch($_POST['operation']){
-		case 'urlencode':
-			$result = urlencode($_POST['string']);
-			break;
-		case 'urldecode':
-			$result = urldecode($_POST['string']);
-			break;
-		case 'guid':
-			$result = generate_guid();
-			break;
-		case 'md5':
-			$result = md5($_POST['string']);
-			break;
-		case 'sha1':
-			$result = sha1($_POST['string']);
-			break;
-		case 'unique_id';
-			$result = $_POST['string'] ? uniqid($_POST['string']) : uniqid ();
-			break;
-		case 'sha1_unique_id':
-			$result = sha1(uniqid($_POST['string'], TRUE));
-			break;
-		case 'base64_encode':
-			$result = base64_encode($_POST['string']);
-			break;
-		case 'base64_decode':
-			$result = base64_decode($_POST['string']);
-			break;
-		case 'parse_str':
-			parse_str($_POST['string'], $result);
-			$result = print_r($result, TRUE); 
-			break;
-		case 'htmlentities':
-			$result = htmlentities(htmlentities($_POST['string'], ENT_QUOTES, 'ISO-8859-1'), ENT_QUOTES, 'ISO-8859-1');
-			break;
-		case 'html_entity_decode':
-			$result = html_entity_decode($_POST['string']);
-			break;
-		case 'javascript_write':
-			$result = 'document.write("' . mysql_escape_string(str_replace("\r\n", "", utf8_encode($_POST['string']))) . '");';
-			break;
-		case 'json_decode':
-			$result = print_r(json_decode($_POST['string'], TRUE), TRUE);
-			break;
-		case 'preg_quote':
-			$result = preg_quote($_POST['string'], '/');
-			break;
-		case 'strtotime':
-			$result = strtotime($_POST['string']);
-			break;
-		case 'timestamp_to_date':
-			$result = date('Y-m-d H:i:s', $_POST['string']);
-			break;
-		case 'datestamp':
-			$result = date('YmdHis') . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT);
-			break;
-		case 'unserialize':
-			$result = print_r(unserialize($_POST['string']), TRUE);
-			break;
-	}	
+    try{
+        switch($_POST['operation']){
+            case 'urlencode':
+                $result = urlencode($_POST['string']);
+                break;
+            case 'urldecode':
+                $result = urldecode($_POST['string']);
+                break;
+            case 'guid':
+                $result = generate_guid();
+                break;
+            case 'md5':
+                $result = md5($_POST['string']);
+                break;
+            case 'sha1':
+                $result = sha1($_POST['string']);
+                break;
+            case 'unique_id';
+                $result = $_POST['string'] ? uniqid($_POST['string']) : uniqid ();
+                break;
+            case 'sha1_unique_id':
+                $result = sha1(uniqid($_POST['string'], TRUE));
+                break;
+            case 'base64_encode':
+                $result = base64_encode($_POST['string']);
+                break;
+            case 'base64_decode':
+                $result = base64_decode($_POST['string']);
+                break;
+            case 'parse_str':
+                parse_str($_POST['string'], $result);
+                $result = print_r($result, TRUE);
+                break;
+            case 'htmlentities':
+                $result = htmlentities(htmlentities($_POST['string'], ENT_QUOTES, 'ISO-8859-1'), ENT_QUOTES, 'ISO-8859-1');
+                break;
+            case 'html_entity_decode':
+                $result = html_entity_decode($_POST['string']);
+                break;
+            case 'javascript_write':
+                $result = 'document.write("' . mysql_escape_string(str_replace("\r\n", "", utf8_encode($_POST['string']))) . '");';
+                break;
+            case 'json_decode':
+                $result = print_r(json_decode($_POST['string'], TRUE), TRUE);
+                break;
+            case 'preg_quote':
+                $result = preg_quote($_POST['string'], '/');
+                break;
+            case 'strtotime':
+                $result = strtotime($_POST['string']);
+                break;
+            case 'timestamp_to_date':
+                $result = date('Y-m-d H:i:s', $_POST['string']);
+                break;
+            case 'datestamp':
+                $result = date('YmdHis') . str_pad(rand(1,999), 3, '0', STR_PAD_LEFT);
+                break;
+            case 'unserialize':
+                $result = print_r(unserialize($_POST['string']), TRUE);
+                break;
+        }
+	} catch (\Throwable $e) {
+        $result = $e->getMessage();
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -111,12 +138,7 @@ if (array_key_exists('operation', $_POST)){
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/latest/js/bootstrap.min.js"></script>
 
-    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-	    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
-	<![endif]-->
-	
-	<style type="text/css">
+	<style>
 	/*
 	 * Update our padding and margin.
 	 */
@@ -153,7 +175,7 @@ if (array_key_exists('operation', $_POST)){
 	<form method="POST">
 	
 	<label for="operation">Operation</label>
-	<select name="operation" class="input-xxlarge">
+	<select id="operation" name="operation" class="input-xxlarge">
 		<?php foreach ($operations as $k=>$v):?>
 			<option value="<?php echo $k;?>" <?php echo array_key_exists('operation', $_POST) && $_POST['operation'] == $k ? 'selected="selected"' : ''?>><?php echo $v;?></option>
 		<?php endforeach; ?>
@@ -162,12 +184,12 @@ if (array_key_exists('operation', $_POST)){
 	<div class="row-fluid">
 			<div class="span6">
 				<label for="string">Original String</label>
-				<textarea rows="10" cols="80" name="string"><?php echo array_key_exists('string', $_POST) ? $_POST['string'] : '';?></textarea>
+				<textarea rows="10" cols="80" id="string" name="string"><?php echo array_key_exists('string', $_POST) ? $_POST['string'] : '';?></textarea>
 			</div>
 			
 			<div class="span6">
-				<label for="string">Result</label>
-				<textarea rows="10" cols="80" name="result"><?php echo isset($result) ? $result : '';?></textarea>
+				<label for="result">Result</label>
+				<textarea rows="10" cols="80" id="result" name="result"><?php echo isset($result) ? $result : '';?></textarea>
 			</div>
 	
 			<input type="submit">
